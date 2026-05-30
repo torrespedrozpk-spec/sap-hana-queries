@@ -23,7 +23,8 @@ sap-hana-queries/
     ├── costeo_importaciones_hidroingenieria.sql# Costeo landing cost por ítem — HIDROINGENIERIA
     ├── demora_costeo_econtrol.sql              # Días reales entrada → costeo — E_CONTROL (media ~7 días)
     ├── demora_costeo_enving.sql                # Días reales entrada → costeo — ENVING (media ~14 días)
-    └── demora_costeo_hidroingenieria.sql       # Días reales entrada → costeo — HIDROINGENIERIA
+    ├── demora_costeo_hidroingenieria.sql       # Días reales entrada → costeo — HIDROINGENIERIA
+    └── reporte_semanal_implementacion.md       # Guía completa: ETL + script Python + cron email semanal
 ```
 
 ## Tablas principales
