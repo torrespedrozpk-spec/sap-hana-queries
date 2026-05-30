@@ -1,7 +1,7 @@
-# SAP HANA Queries — E_CONTROL
+# SAP HANA Queries — E_CONTROL / ENVING
 
 Repositorio de consultas SQL para SAP Business One / HANA.
-Esquema: `E_CONTROL`
+Esquemas: `E_CONTROL`, `ENVING`
 
 ## Estructura
 
@@ -15,8 +15,11 @@ sap-hana-queries/
 ├── entregas/
 │   ├── entregas_total_por_proyecto.sql     # Costo total agrupado por proyecto
 │   └── entregas_detalle_items.sql          # Detalle de items por proyecto
-└── intercompany/
-    └── intercompany_estado_facturacion.sql # Estado de facturación de entregas intercompany
+├── intercompany/
+│   └── intercompany_estado_facturacion.sql # Estado de facturación de entregas intercompany
+└── importaciones/
+    ├── costeo_importaciones_econtrol.sql   # Costeo landing cost por ítem — E_CONTROL
+    └── costeo_importaciones_enving.sql     # Costeo landing cost por ítem — ENVING
 ```
 
 ## Tablas principales
@@ -34,4 +37,7 @@ sap-hana-queries/
 | `ODLN` | Entregas (Delivery) |
 | `OINV` | Facturas de venta (AR Invoice) |
 | `INV1` | Líneas de facturas de venta |
+| `OIPF` | Precio de entrega / Landed Costs (cabecera) |
+| `IPF1` | Líneas de Precio de entrega (costo por ítem prorrateado) |
+| `OPDN` | Entrada de mercancías / Goods Receipt |
 
