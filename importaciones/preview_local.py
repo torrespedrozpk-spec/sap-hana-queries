@@ -174,6 +174,7 @@ def main():
                 DAYS_BETWEEN(I."DocDate", I."CreateDate")               AS dias
             FROM "E_CONTROL".OIPF I
             WHERE DAYS_BETWEEN(I."DocDate", I."CreateDate") > 7
+              AND YEAR(I."CreateDate") IN (2025, 2026)
             UNION ALL
             SELECT
                 'ENVING',
@@ -192,6 +193,7 @@ def main():
             INNER JOIN "ENVING".IPF1 L ON L."DocEntry" = I."DocEntry"
             LEFT JOIN "ENVING".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
             LEFT JOIN "ENVING".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
+            WHERE YEAR(I."CreateDate") IN (2025, 2026)
             GROUP BY I."DocNum", I."CreateDate", I."SuppName", L."BaseType",
                      D."DocDate", D."CreateDate", I2."DocDate", I2."CreateDate"
             HAVING DAYS_BETWEEN(
