@@ -90,40 +90,28 @@ def main():
 
     print("Consultando demoras históricas...")
     cols_demora, rows_demora = fetch(conn, """
-        SELECT empresa, total, prom, maximo, minimo FROM (
+        SELECT empresa, COUNT(*) AS total,
+               ROUND(AVG(dias), 1) AS prom,
+               MAX(dias) AS maximo,
+               MIN(dias) AS minimo
+        FROM (
             SELECT
-                'E_CONTROL'                                             AS empresa,
-                COUNT(*)                                                AS total,
-                ROUND(AVG(DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate")), 1)                           AS prom,
+                'E_CONTROL' AS empresa,
+                I."DocNum",
                 MAX(DAYS_BETWEEN(
                     CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
                          WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate"))                               AS maximo,
-                MIN(DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate"))                               AS minimo
+                    END, I."CreateDate")) AS dias
             FROM "E_CONTROL".OIPF I
             INNER JOIN "E_CONTROL".IPF1 L ON L."DocEntry" = I."DocEntry"
             LEFT JOIN "E_CONTROL".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
             LEFT JOIN "E_CONTROL".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
-            GROUP BY I."DocNum", I."CreateDate", L."BaseType", D."CreateDate", I2."CreateDate"
+            GROUP BY I."DocNum", I."CreateDate"
             UNION ALL
             SELECT
                 'ENVING',
-                COUNT(*),
-                ROUND(AVG(DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate")), 1),
+                I."DocNum",
                 MAX(DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate")),
-                MIN(DAYS_BETWEEN(
                     CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
                          WHEN L."BaseType" = 69 THEN I2."CreateDate"
                     END, I."CreateDate"))
@@ -131,8 +119,9 @@ def main():
             INNER JOIN "ENVING".IPF1 L ON L."DocEntry" = I."DocEntry"
             LEFT JOIN "ENVING".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
             LEFT JOIN "ENVING".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
-            GROUP BY I."DocNum", I."CreateDate", L."BaseType", D."CreateDate", I2."CreateDate"
+            GROUP BY I."DocNum", I."CreateDate"
         ) X
+        GROUP BY empresa
         ORDER BY empresa
     """)
     cols_demora = ["Empresa", "Total importaciones", "Días promedio", "Máximo días", "Mínimo días"]
