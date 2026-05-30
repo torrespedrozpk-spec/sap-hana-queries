@@ -4,26 +4,60 @@
 -- y creación del costeo (fechas inmodificables)
 -- Referencia: media histórica ~14 días
 -- =============================================
--- Dias_Entrada_a_Costeo    : CreateDate(OPDN) → CreateDate(OIPF) — demora real del área
+-- Dias_Entrada_a_Costeo    : CreateDate(base) → CreateDate(OIPF) — demora real del área
 -- Dias_Doc_a_Costeo        : DocDate(OIPF) → CreateDate(OIPF)    — detecta backdating
--- Dias_Total_Llegada_Costeo: DocDate(OPDN) → CreateDate(OIPF)    — demora total declarada
+-- Dias_Total_Llegada_Costeo: DocDate(base) → CreateDate(OIPF)    — demora total declarada
+-- BaseType=20 → base es OPDN directo
+-- BaseType=69 → base es otro OIPF (cadena encadenada)
 -- =============================================
 
 SELECT
-    I."DocNum"                                          AS Nro_PrecioEntrega,
-    I."DocDate"                                         AS Fecha_Documento,
-    I."CreateDate"                                      AS Fecha_Ingreso_Sistema,
-    I."SuppName"                                        AS Proveedor,
-    I."AgentName"                                       AS Agencia_Aduanal,
-    D."DocDate"                                         AS Fecha_Entrada_Mercancia,
-    D."CreateDate"                                      AS Fecha_Creacion_Entrada,
-    DAYS_BETWEEN(D."CreateDate", I."CreateDate")        AS Dias_Entrada_a_Costeo,
-    DAYS_BETWEEN(I."DocDate", I."CreateDate")           AS Dias_Doc_a_Costeo,
-    DAYS_BETWEEN(D."DocDate", I."CreateDate")           AS Dias_Total_Llegada_a_Costeo
+    'ENVING'                                                    AS empresa,
+    I."DocNum"                                                  AS nro_precio_entrega,
+    I."DocDate"                                                 AS fecha_documento,
+    I."CreateDate"                                              AS fecha_ingreso_sistema,
+    I."SuppName"                                                AS proveedor,
+    I."AgentName"                                               AS agencia_aduanal,
+    CASE
+        WHEN L."BaseType" = 20 THEN D."DocDate"
+        WHEN L."BaseType" = 69 THEN I2."DocDate"
+    END                                                         AS fecha_entrada_mercancia,
+    CASE
+        WHEN L."BaseType" = 20 THEN D."CreateDate"
+        WHEN L."BaseType" = 69 THEN I2."CreateDate"
+    END                                                         AS fecha_creacion_entrada,
+    DAYS_BETWEEN(
+        CASE
+            WHEN L."BaseType" = 20 THEN D."CreateDate"
+            WHEN L."BaseType" = 69 THEN I2."CreateDate"
+        END,
+        I."CreateDate"
+    )                                                           AS dias_entrada_a_costeo,
+    DAYS_BETWEEN(I."DocDate", I."CreateDate")                   AS dias_backdating,
+    DAYS_BETWEEN(
+        CASE
+            WHEN L."BaseType" = 20 THEN D."DocDate"
+            WHEN L."BaseType" = 69 THEN I2."DocDate"
+        END,
+        I."CreateDate"
+    )                                                           AS dias_total_llegada_a_costeo
 FROM "ENVING".OIPF I
-INNER JOIN "ENVING".OPDN D ON D."DocEntry" = (
-    SELECT MIN(L."BaseEntry")
-    FROM "ENVING".IPF1 L
-    WHERE L."DocEntry" = I."DocEntry"
-)
+INNER JOIN "ENVING".IPF1 L ON L."DocEntry" = I."DocEntry"
+LEFT JOIN "ENVING".OPDN D
+    ON D."DocEntry" = L."BaseEntry"
+    AND L."BaseType" = 20
+LEFT JOIN "ENVING".OIPF I2
+    ON I2."DocEntry" = L."BaseEntry"
+    AND L."BaseType" = 69
+GROUP BY
+    I."DocNum",
+    I."DocDate",
+    I."CreateDate",
+    I."SuppName",
+    I."AgentName",
+    L."BaseType",
+    D."DocDate",
+    D."CreateDate",
+    I2."DocDate",
+    I2."CreateDate"
 ORDER BY I."CreateDate" DESC

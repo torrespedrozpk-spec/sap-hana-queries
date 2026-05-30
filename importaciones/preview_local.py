@@ -94,24 +94,44 @@ def main():
             SELECT
                 'E_CONTROL'                                             AS empresa,
                 COUNT(*)                                                AS total,
-                ROUND(AVG(DAYS_BETWEEN(D."CreateDate", I."CreateDate")), 1) AS prom,
-                MAX(DAYS_BETWEEN(D."CreateDate", I."CreateDate"))       AS maximo,
-                MIN(DAYS_BETWEEN(D."CreateDate", I."CreateDate"))       AS minimo
+                ROUND(AVG(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate")), 1)                           AS prom,
+                MAX(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate"))                               AS maximo,
+                MIN(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate"))                               AS minimo
             FROM "E_CONTROL".OIPF I
-            INNER JOIN "E_CONTROL".OPDN D ON D."DocEntry" = (
-                SELECT MIN(L."BaseEntry") FROM "E_CONTROL".IPF1 L WHERE L."DocEntry" = I."DocEntry"
-            )
+            INNER JOIN "E_CONTROL".IPF1 L ON L."DocEntry" = I."DocEntry"
+            LEFT JOIN "E_CONTROL".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
+            LEFT JOIN "E_CONTROL".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
+            GROUP BY I."DocNum", I."CreateDate", L."BaseType", D."CreateDate", I2."CreateDate"
             UNION ALL
             SELECT
                 'ENVING',
                 COUNT(*),
-                ROUND(AVG(DAYS_BETWEEN(D."CreateDate", I."CreateDate")), 1),
-                MAX(DAYS_BETWEEN(D."CreateDate", I."CreateDate")),
-                MIN(DAYS_BETWEEN(D."CreateDate", I."CreateDate"))
+                ROUND(AVG(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate")), 1),
+                MAX(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate")),
+                MIN(DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate"))
             FROM "ENVING".OIPF I
-            INNER JOIN "ENVING".OPDN D ON D."DocEntry" = (
-                SELECT MIN(L."BaseEntry") FROM "ENVING".IPF1 L WHERE L."DocEntry" = I."DocEntry"
-            )
+            INNER JOIN "ENVING".IPF1 L ON L."DocEntry" = I."DocEntry"
+            LEFT JOIN "ENVING".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
+            LEFT JOIN "ENVING".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
+            GROUP BY I."DocNum", I."CreateDate", L."BaseType", D."CreateDate", I2."CreateDate"
         ) X
         ORDER BY empresa
     """)
@@ -165,28 +185,50 @@ def main():
             SELECT
                 'E_CONTROL'                                             AS empresa,
                 I."DocNum"                                              AS doc,
-                TO_VARCHAR(D."DocDate", 'DD/MM/YYYY')                   AS f_entrada,
+                TO_VARCHAR(
+                    CASE WHEN L."BaseType" = 20 THEN D."DocDate"
+                         WHEN L."BaseType" = 69 THEN I2."DocDate"
+                    END, 'DD/MM/YYYY')                                  AS f_entrada,
                 TO_VARCHAR(I."CreateDate", 'DD/MM/YYYY')                AS f_costeo,
                 I."SuppName"                                            AS proveedor,
-                DAYS_BETWEEN(D."CreateDate", I."CreateDate")            AS dias
+                DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate")                                AS dias
             FROM "E_CONTROL".OIPF I
-            INNER JOIN "E_CONTROL".OPDN D ON D."DocEntry" = (
-                SELECT MIN(L."BaseEntry") FROM "E_CONTROL".IPF1 L WHERE L."DocEntry" = I."DocEntry"
-            )
-            WHERE DAYS_BETWEEN(D."CreateDate", I."CreateDate") > 7
+            INNER JOIN "E_CONTROL".IPF1 L ON L."DocEntry" = I."DocEntry"
+            LEFT JOIN "E_CONTROL".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
+            LEFT JOIN "E_CONTROL".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
+            GROUP BY I."DocNum", I."CreateDate", I."SuppName", L."BaseType",
+                     D."DocDate", D."CreateDate", I2."DocDate", I2."CreateDate"
+            HAVING DAYS_BETWEEN(
+                CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                     WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                END, I."CreateDate") > 7
             UNION ALL
             SELECT
                 'ENVING',
                 I."DocNum",
-                TO_VARCHAR(D."DocDate", 'DD/MM/YYYY'),
+                TO_VARCHAR(
+                    CASE WHEN L."BaseType" = 20 THEN D."DocDate"
+                         WHEN L."BaseType" = 69 THEN I2."DocDate"
+                    END, 'DD/MM/YYYY'),
                 TO_VARCHAR(I."CreateDate", 'DD/MM/YYYY'),
                 I."SuppName",
-                DAYS_BETWEEN(D."CreateDate", I."CreateDate")
+                DAYS_BETWEEN(
+                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                    END, I."CreateDate")
             FROM "ENVING".OIPF I
-            INNER JOIN "ENVING".OPDN D ON D."DocEntry" = (
-                SELECT MIN(L."BaseEntry") FROM "ENVING".IPF1 L WHERE L."DocEntry" = I."DocEntry"
-            )
-            WHERE DAYS_BETWEEN(D."CreateDate", I."CreateDate") > 7
+            INNER JOIN "ENVING".IPF1 L ON L."DocEntry" = I."DocEntry"
+            LEFT JOIN "ENVING".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
+            LEFT JOIN "ENVING".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
+            GROUP BY I."DocNum", I."CreateDate", I."SuppName", L."BaseType",
+                     D."DocDate", D."CreateDate", I2."DocDate", I2."CreateDate"
+            HAVING DAYS_BETWEEN(
+                CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
+                     WHEN L."BaseType" = 69 THEN I2."CreateDate"
+                END, I."CreateDate") > 7
         ) X
         ORDER BY dias DESC
         LIMIT 10
