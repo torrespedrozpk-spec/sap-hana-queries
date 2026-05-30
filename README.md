@@ -25,6 +25,22 @@ sap-hana-queries/
     ├── demora_costeo_enving.sql                # Días reales entrada → costeo — ENVING (media ~14 días)
     ├── demora_costeo_hidroingenieria.sql       # Días reales entrada → costeo — HIDROINGENIERIA
     └── reporte_semanal_implementacion.md       # Guía completa: ETL + script Python + cron email semanal
+
+### Scripts Python
+
+| Archivo | Descripción |
+|---|---|
+| `importaciones/preview_local.py` | Preview HTML desde Mac conectando directo a SAP HANA |
+| `~/etl_sap/reporte_semanal.py` | Script completo de envío (ver guía de implementación) |
+
+**Setup preview local (Mac):**
+```bash
+cd /ruta/a/etl_sap
+python3 -m venv venv
+source venv/bin/activate
+pip install hdbcli
+python preview_local.py
+```
 ```
 
 ## Tablas principales
