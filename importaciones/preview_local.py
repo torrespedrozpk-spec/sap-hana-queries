@@ -98,15 +98,9 @@ def main():
             SELECT
                 'E_CONTROL' AS empresa,
                 I."DocNum",
-                MAX(DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate")) AS dias
+                DAYS_BETWEEN(I."DocDate", I."CreateDate") AS dias
             FROM "E_CONTROL".OIPF I
-            INNER JOIN "E_CONTROL".IPF1 L ON L."DocEntry" = I."DocEntry"
-            LEFT JOIN "E_CONTROL".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
-            LEFT JOIN "E_CONTROL".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
-            GROUP BY I."DocNum", I."CreateDate"
+            GROUP BY I."DocNum", I."DocDate", I."CreateDate"
             UNION ALL
             SELECT
                 'ENVING',
@@ -174,26 +168,12 @@ def main():
             SELECT
                 'E_CONTROL'                                             AS empresa,
                 I."DocNum"                                              AS doc,
-                TO_VARCHAR(
-                    CASE WHEN L."BaseType" = 20 THEN D."DocDate"
-                         WHEN L."BaseType" = 69 THEN I2."DocDate"
-                    END, 'DD/MM/YYYY')                                  AS f_entrada,
+                TO_VARCHAR(I."DocDate", 'DD/MM/YYYY')                   AS f_entrada,
                 TO_VARCHAR(I."CreateDate", 'DD/MM/YYYY')                AS f_costeo,
                 I."SuppName"                                            AS proveedor,
-                DAYS_BETWEEN(
-                    CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                         WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                    END, I."CreateDate")                                AS dias
+                DAYS_BETWEEN(I."DocDate", I."CreateDate")               AS dias
             FROM "E_CONTROL".OIPF I
-            INNER JOIN "E_CONTROL".IPF1 L ON L."DocEntry" = I."DocEntry"
-            LEFT JOIN "E_CONTROL".OPDN D ON D."DocEntry" = L."BaseEntry" AND L."BaseType" = 20
-            LEFT JOIN "E_CONTROL".OIPF I2 ON I2."DocEntry" = L."BaseEntry" AND L."BaseType" = 69
-            GROUP BY I."DocNum", I."CreateDate", I."SuppName", L."BaseType",
-                     D."DocDate", D."CreateDate", I2."DocDate", I2."CreateDate"
-            HAVING DAYS_BETWEEN(
-                CASE WHEN L."BaseType" = 20 THEN D."CreateDate"
-                     WHEN L."BaseType" = 69 THEN I2."CreateDate"
-                END, I."CreateDate") > 7
+            WHERE DAYS_BETWEEN(I."DocDate", I."CreateDate") > 7
             UNION ALL
             SELECT
                 'ENVING',
@@ -222,7 +202,7 @@ def main():
         ORDER BY dias DESC
         LIMIT 10
     """)
-    cols_alerta = ["Empresa", "N° Doc", "Fecha Entrada", "Costeo Ingresado", "Proveedor", "Días de demora"]
+    cols_alerta = ["Empresa", "N° Doc", "Fecha Referencia", "Costeo Ingresado", "Proveedor", "Días de demora"]
 
     conn.close()
     print("✅ Consultas completadas")
@@ -240,7 +220,7 @@ def main():
     <h3 style="color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:4px;">🆕 Nuevas cargas ingresadas esta semana</h3>
     {tabla_html(cols_nuevas, rows_nuevas)}
     <h3 style="color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:4px;margin-top:28px;">📊 Resumen de demora por empresa (histórico)</h3>
-    <p style="font-size:12px;color:#888;">Referencia: E_CONTROL ~7 días · ENVING ~14 días</p>
+    <p style="font-size:12px;color:#888;">E_CONTROL: días entre fecha declarada y creación real del costeo (backdating) · ENVING: días entre entrada de mercancía y costeo finalizado</p>
     {tabla_html(cols_demora, rows_demora)}
     <h3 style="color:#2c3e50;border-bottom:2px solid #2c3e50;padding-bottom:4px;margin-top:28px;">💰 Detalle de costeo — cargas de esta semana</h3>
     {tabla_html(cols_costeo, rows_costeo)}
