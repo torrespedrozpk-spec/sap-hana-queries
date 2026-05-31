@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "sap-hana": {
+      "command": "python3",
+      "args": ["/Users/TU_USUARIO/sap-hana-mcp/hana_mcp_server.py"],
+      "env": {
+        "HANA_HOST": "192.168.0.200",
+        "HANA_PORT": "30015",
+        "HANA_USER": "TU_USUARIO_HANA",
+        "HANA_PASSWORD": "TU_PASSWORD_HANA",
+        "MAX_ROWS": "500"
+      }
+    }
+  }
+}
