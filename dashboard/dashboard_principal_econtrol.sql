@@ -1,7 +1,7 @@
 -- ============================================================
 -- Dashboard Principal: Presupuesto, Facturación, Costos y Margen por Proyecto
 -- Versión: 3 — Costos separados: Materiales vs Mano de Obra
--- Esquema: ENVING
+-- Esquema: E_CONTROL
 -- Tablas: OQUT, OPRJ, VIEW_EJECUCION_PRESUPUESTO_ZH,
 --         VIEW_ENTREGAS_ZH, PCH1, OPCH
 -- Nota: ZZ% excluido de ambos costos (ajuste contable IVA)
@@ -9,7 +9,7 @@
 -- ============================================================
 WITH "COSTOS_MAT" AS (
     SELECT "Project", SUM("TotalLinea") AS "CostoMateriales"
-    FROM "ENVING"."VIEW_ENTREGAS_ZH"
+    FROM "E_CONTROL"."VIEW_ENTREGAS_ZH"
     WHERE "Project" <> '00'
       AND "Project" != ''
       AND "Project" IS NOT NULL
@@ -20,8 +20,8 @@ WITH "COSTOS_MAT" AS (
 ),
 "COSTOS_MO" AS (
     SELECT T0."Project", SUM(T0."GTotal") AS "CostoManoObra"
-    FROM "ENVING"."PCH1" T0
-    INNER JOIN "ENVING"."OPCH" T5 ON T5."DocEntry" = T0."DocEntry"
+    FROM "E_CONTROL"."PCH1" T0
+    INNER JOIN "E_CONTROL"."OPCH" T5 ON T5."DocEntry" = T0."DocEntry"
     WHERE T5."CANCELED" = 'N'
       AND T0."Project" <> '00'
       AND T0."Project" != ''
@@ -37,13 +37,13 @@ WITH "COSTOS_MAT" AS (
         SUM("TOTALFACTURA")        AS "TotalFacturado",
         SUM("TOTALPAGADO")         AS "TotalCobrado",
         SUM(IFNULL("TOTALNCR", 0)) AS "TotalNotasCredito"
-    FROM "ENVING"."VIEW_EJECUCION_PRESUPUESTO_ZH"
+    FROM "E_CONTROL"."VIEW_EJECUCION_PRESUPUESTO_ZH"
     WHERE "Project" <> '00' AND "Project" IS NOT NULL
     GROUP BY "Project"
 ),
 "PRESUP" AS (
     SELECT T0."Project", T0."CardName", T0."DocTotal", T0."DocDate"
-    FROM "ENVING"."OQUT" T0
+    FROM "E_CONTROL"."OQUT" T0
     WHERE T0."CANCELED" = 'N'
       AND T0."Project" <> '00'
       AND T0."Project" != ''
@@ -75,10 +75,10 @@ WITH "COSTOS_MAT" AS (
         P."DocTotal" - (IFNULL(F."TotalFacturado", 0) - IFNULL(F."TotalNotasCredito", 0))                 AS "SaldoPorFacturar",
         (IFNULL(F."TotalFacturado", 0) - IFNULL(F."TotalNotasCredito", 0)) - IFNULL(F."TotalCobrado", 0)  AS "SaldoPorCobrar"
     FROM "PRESUP" P
-    LEFT JOIN "ENVING"."OPRJ" PR  ON P."Project" = PR."PrjCode"
-    LEFT JOIN "FACT" F             ON P."Project" = F."Project"
-    LEFT JOIN "COSTOS_MAT" M       ON P."Project" = M."Project"
-    LEFT JOIN "COSTOS_MO" MO       ON P."Project" = MO."Project"
+    LEFT JOIN "E_CONTROL"."OPRJ" PR  ON P."Project" = PR."PrjCode"
+    LEFT JOIN "FACT" F                ON P."Project" = F."Project"
+    LEFT JOIN "COSTOS_MAT" M          ON P."Project" = M."Project"
+    LEFT JOIN "COSTOS_MO" MO          ON P."Project" = MO."Project"
 )
 SELECT * FROM "RESULT"
 ORDER BY "Fecha" DESC
